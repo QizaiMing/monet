@@ -1,0 +1,46 @@
+version: '3'
+services:
+  web:
+    image: nginx
+    container_name: nginx_server_monet_api
+    volumes:
+      - ./monet_api.template:/etc/nginx/conf.d/monet_api.template
+      - ./certs:/etc/nginx/certs
+    ports:
+      - '80:80'
+      - '443:443'
+    links:
+      - django
+    environment:
+      - NGINX_HOST=monet_api
+      - NGINX_PORT=80
+    command: /bin/bash -c "envsubst < /etc/nginx/conf.d/monet_api.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
+  django:
+    container_name: django_server_monet_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: docker_monet_api
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/var/www/monet_api
+    ports:
+      - '8000:8000'
+    expose:
+      - '8000'
+    links:
+      - db
+    depends_on:
+      - db
+  db:
+    container_name: postgres_monet_api
+    image: postgres
+    ports:
+      - '5432:5432'
+    expose:
+      - '5432'
+    environment:
+      POSTGRES_USER: monet
+      POSTGRES_DB: monet
+      POSTGRES_PASSWORD: 9209949
